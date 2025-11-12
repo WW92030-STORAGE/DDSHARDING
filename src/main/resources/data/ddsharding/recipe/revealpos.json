@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " i ",
+    "ixi",
+    " i "
+  ],
+  "key": {
+    "i": {
+      "item": "minecraft:iron_ingot"
+    },
+    "x": {
+      "item": "ddsharding:revealshard"
+    }
+  },
+  "result": {
+    "id": "ddsharding:revealpos",
+    "count": 4
+  }
+}

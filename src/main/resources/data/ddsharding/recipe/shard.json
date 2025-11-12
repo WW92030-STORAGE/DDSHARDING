@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " i ",
+    "isi",
+    " i "
+  ],
+  "key": {
+    "i": {
+      "item": "minecraft:amethyst_shard"
+    },
+    "s": {
+      "item": "minecraft:soul_sand"
+    }
+  },
+  "result": {
+    "id": "ddsharding:shard",
+    "count": 32
+  }
+}

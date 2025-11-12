@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "ddsharding:shard",
+    "ddsharding:revealshard",
+    "ddsharding:shardplacer",
+    "ddsharding:shardtester",
+    "ddsharding:revealshardplacer",
+    "ddsharding:revealpos"
+  ]
+}

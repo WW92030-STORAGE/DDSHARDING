@@ -1,0 +1,9 @@
+{
+  "item.ddsharding.tablet": "TABLET",
+  "block.ddsharding.shard": "SHARD",
+  "block.ddsharding.revealshard": "REVEAL SHARD",
+  "block.ddsharding.shardplacer": "SHARD PLACER",
+  "block.ddsharding.revealshardplacer": "REVEAL SHARD PLACER",
+  "block.ddsharding.shardtester": "SHARD TESTER",
+  "block.ddsharding.revealpos": "REVEAL POS"
+}

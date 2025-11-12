@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " i ",
+    "ixi",
+    " i "
+  ],
+  "key": {
+    "i": {
+      "item": "minecraft:redstone"
+    },
+    "x": {
+      "item": "ddsharding:shard"
+    }
+  },
+  "result": {
+    "id": "ddsharding:shardtester",
+    "count": 4
+  }
+}

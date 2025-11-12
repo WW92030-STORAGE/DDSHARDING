@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "ddsharding:block/shardtester"
+  },
+  "render_type": "solid"
+}

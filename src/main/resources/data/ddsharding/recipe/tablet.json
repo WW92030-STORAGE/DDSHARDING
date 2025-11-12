@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "bib",
+    "ixi",
+    "bib"
+  ],
+  "key": {
+    "i": {
+      "item": "minecraft:redstone"
+    },
+    "x": {
+      "item": "ddsharding:shard"
+    },
+    "b": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "id": "ddsharding:tablet",
+    "count": 1
+  }
+}
