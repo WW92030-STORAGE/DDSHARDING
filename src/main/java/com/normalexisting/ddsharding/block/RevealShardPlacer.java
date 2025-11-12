@@ -91,12 +91,16 @@ public class RevealShardPlacer extends Block {
             }
 
             for (int K = 1; K <= MAX_RANGE; K++) {
-                BlockPos BP = BlockPos.containing(aaaaa.getX(), aaaaa.getY() + K, aaaaa.getZ());
-                Block tester = level.getBlockState(BP).getBlock();
-                if (tester == ModBlocks.REVEALSHARD.get() ) return; // do not override shards
-                if (tester == Blocks.AIR) {
-                    level.setBlock(BP, ModBlocks.REVEALSHARD.get().defaultBlockState(), 3);
-                    return;
+                try {
+                    BlockPos BP = BlockPos.containing(aaaaa.getX(), aaaaa.getY() + K, aaaaa.getZ());
+                    Block tester = level.getBlockState(BP).getBlock();
+                    if (tester == ModBlocks.REVEALSHARD.get()) return; // do not override shards
+                    if (tester == Blocks.AIR) {
+                        level.setBlock(BP, ModBlocks.REVEALSHARD.get().defaultBlockState(), 3);
+                        return;
+                    }
+                } catch (Exception e) {
+
                 }
             }
 
