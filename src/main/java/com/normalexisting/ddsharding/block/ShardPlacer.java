@@ -29,12 +29,16 @@ public class ShardPlacer extends Block {
             POWERED = true;
 
             for (int K = 1; K <= MAX_RANGE; K++) {
-                BlockPos BP = BlockPos.containing(pos.getX(), pos.getY() + K, pos.getZ());
-                Block tester = level.getBlockState(BP).getBlock();
-                if (tester == ModBlocks.SHARD.get()) return; // do not override shards
-                if (tester == Blocks.AIR) {
-                    level.setBlock(BP, ModBlocks.SHARD.get().defaultBlockState(), 3);
-                    return;
+                try {
+                    BlockPos BP = BlockPos.containing(pos.getX(), pos.getY() + K, pos.getZ());
+                    Block tester = level.getBlockState(BP).getBlock();
+                    if (tester == ModBlocks.SHARD.get()) return; // do not override shards
+                    if (tester == Blocks.AIR) {
+                        level.setBlock(BP, ModBlocks.SHARD.get().defaultBlockState(), 3);
+                        return;
+                    }
+                } catch (Exception e) {
+
                 }
             }
         } else POWERED = false;
