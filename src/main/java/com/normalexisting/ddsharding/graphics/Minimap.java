@@ -85,7 +85,7 @@ public class Minimap {
 
         UUID uuid = player.getUUID();
         if (!Minimap.toggle.containsKey(uuid)) {
-            Minimap.toggle.put(uuid, true);
+            Minimap.toggle.put(uuid, false);
             System.out.println("INIT TOGGLE");
         }
         // System.out.println(uuid + " " + toggle.get(uuid));
