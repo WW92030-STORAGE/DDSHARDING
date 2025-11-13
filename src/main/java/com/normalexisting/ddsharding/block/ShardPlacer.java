@@ -11,9 +11,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
+import java.util.HashSet;
+
 public class ShardPlacer extends Block {
     final int MAX_RANGE = 16;
-    boolean POWERED = false;
+
+    static HashSet<BlockPos> powered_pos = new HashSet<>();
 
     public ShardPlacer(Properties properties) {
         super(properties);
@@ -25,8 +28,8 @@ public class ShardPlacer extends Block {
     public void neighborChanged(BlockState blockstate, Level level, BlockPos pos, Block nn, BlockPos fromPos, boolean moving) {
         super.neighborChanged(blockstate, level, pos, nn, fromPos, moving);
         if (level.getBestNeighborSignal(pos) > 0) {
-            if (POWERED) return;
-            POWERED = true;
+            if (powered_pos.contains(pos)) return;
+            powered_pos.add(pos);
 
             for (int K = 1; K <= MAX_RANGE; K++) {
                 try {
@@ -38,9 +41,12 @@ public class ShardPlacer extends Block {
                         return;
                     }
                 } catch (Exception e) {
-
+                    System.out.println("cannot place shard here: " + e);
                 }
             }
-        } else POWERED = false;
+        } else {
+
+            if (powered_pos.contains(pos)) powered_pos.remove(pos);
+        }
     }
 }

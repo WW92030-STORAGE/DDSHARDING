@@ -74,13 +74,17 @@ public class ShardTester extends BaseEntityBlock {
 
     @Override
     public int getSignal(BlockState blockstate, BlockGetter blockAccess, BlockPos pos, Direction direction) {
-        Block b = Blocks.DAYLIGHT_DETECTOR;
         int res = 0;
-        if (blockAccess.getBlockEntity(pos) instanceof ShardTesterEntity STE) {
-            Level level = STE.getLevel();
-            if (STE.test(getTotalShards(level))) {
-                res = 15;
+        Block b = Blocks.DAYLIGHT_DETECTOR;
+        try {
+            if (blockAccess.getBlockEntity(pos) instanceof ShardTesterEntity STE) {
+                Level level = STE.getLevel();
+                if (STE.test(getTotalShards(level))) {
+                    res = 15;
+                }
             }
+        } catch (Exception e) {
+            System.out.println("Error in getSignal: " + e);
         }
         return res;
     }

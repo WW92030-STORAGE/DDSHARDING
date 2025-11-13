@@ -11,10 +11,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class RevealShardPlacer extends Block {
     final int MAX_RANGE = 64;
-    boolean POWERED = false;
+    static HashSet<BlockPos> powered_pos = new HashSet<>();
 
     final int MAX_RADIUS = 64;
 
@@ -28,8 +29,8 @@ public class RevealShardPlacer extends Block {
     public void neighborChanged(BlockState blockstate, Level level, BlockPos pos, Block nn, BlockPos fromPos, boolean moving) {
         super.neighborChanged(blockstate, level, pos, nn, fromPos, moving);
         if (level.getBestNeighborSignal(pos) > 0) {
-            if (POWERED) return;
-            POWERED = true;
+            if (powered_pos.contains(pos)) return;
+            powered_pos.add(pos);
 
             // Find all shards
             boolean hasRedShard = false;
@@ -100,11 +101,13 @@ public class RevealShardPlacer extends Block {
                         return;
                     }
                 } catch (Exception e) {
-
+                    System.out.println("cannot place reveal shard here: " + e);
                 }
             }
 
 
-        } else POWERED = false;
+        } else {
+            if (powered_pos.contains(pos)) powered_pos.remove(pos);
+        }
     }
 }
