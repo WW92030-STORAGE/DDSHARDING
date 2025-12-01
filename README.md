@@ -5,4 +5,6 @@ Also a rare instance of an open source minimap mod.
 
 # NOTES
 
-All assets by me. Based on Dark Deception by 
+All assets by me. Based on Dark Deception by Glowstick Entertainment.
+
+MAKE SURE TO USE JEI FOR RECIPES.
