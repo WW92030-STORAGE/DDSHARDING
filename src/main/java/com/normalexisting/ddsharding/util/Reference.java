@@ -15,6 +15,9 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Reference {
     public static final String MODID = "ddsharding";
@@ -79,22 +82,71 @@ public class Reference {
 
     public static ArrayList<BlockPos> getBlocksInAABB(Level level, AABB aabb, Collection<Block> filter) {
         ArrayList<BlockPos> res = new ArrayList<>();
-        for (int x = FLOOR(aabb.minX); x <= FLOOR(aabb.maxX); x++) {
-            for (int y = FLOOR(aabb.minY); y <= FLOOR(aabb.maxY); y++) {
+
+        boolean SEQ = false;
+
+        if (SEQ) {
+            for (int x = FLOOR(aabb.minX); x <= FLOOR(aabb.maxX); x++) {
+                for (int y = FLOOR(aabb.minY); y <= FLOOR(aabb.maxY); y++) {
+                    for (int z = FLOOR(aabb.minZ); z <= FLOOR(aabb.maxZ); z++) {
+                        if (filter.size() > 0) {
+                            boolean has = false;
+                            BlockState bs = level.getBlockState(new BlockPos(x, y, z));
+                            for (Block b : filter) {
+                                if (bs.getBlock() == b) has = true;
+                            }
+                            if (has) res.add(new BlockPos(x, y, z));
+                        } else res.add(new BlockPos(x, y, z));
+                    }
+                }
+            }
+        } else {
+            final int NTHREADS = Math.clamp(Runtime.getRuntime().availableProcessors() / 2, 1, 16);
+            ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
+            ArrayList<Callable<Void>> tasks = new ArrayList<>();
+
+            for (int sy = 0; sy < NTHREADS; sy++) {
+                final int id = sy;
+                tasks.add(() -> {
+                    analyzeLayers(id, NTHREADS, level, aabb, filter, res);
+                    return null;
+                });
+            }
+
+            try {
+                executor.invokeAll(tasks);
+
+                executor.shutdown();
+            } catch (Exception e) {System.out.println("GETBLOCKS ANALYSIS ERROR: " + e.toString());}
+        }
+        return res;
+    }
+
+    static synchronized void appendBlockPoses(ArrayList<BlockPos> destination, ArrayList<BlockPos> toAppend) {
+        for (BlockPos bp : toAppend) { destination.add(bp); }
+    }
+
+    static void analyzeLayers(int sy, int step, Level level, AABB aabb, Collection<Block> filter, ArrayList<BlockPos> res) {
+        ArrayList<BlockPos> temp_list = new ArrayList<>();
+        for (int y = sy; y <= FLOOR(aabb.maxY); y += step) {
+            for (int x = FLOOR(aabb.minX); x <= FLOOR(aabb.maxX); x++) {
                 for (int z = FLOOR(aabb.minZ); z <= FLOOR(aabb.maxZ); z++) {
                     if (filter.size() > 0) {
                         boolean has = false;
                         BlockState bs = level.getBlockState(new BlockPos(x, y, z));
                         for (Block b : filter) {
-                            if (bs.getBlock() == b) has = true;
+                            if (bs.getBlock() == b) {
+                                has = true;
+                                break;
+                            }
                         }
-                        if (has) res.add(new BlockPos(x, y, z));
-                    }
-                    else res.add(new BlockPos(x, y, z));
+                        if (has) temp_list.add(new BlockPos(x, y, z));
+                    } else temp_list.add(new BlockPos(x, y, z));
                 }
             }
         }
-        return res;
+
+        appendBlockPoses(res, temp_list);
     }
 
     /*

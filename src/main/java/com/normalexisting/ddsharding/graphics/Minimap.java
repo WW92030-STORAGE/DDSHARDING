@@ -5,6 +5,7 @@ import com.normalexisting.ddsharding.util.Reference;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Graph;
 import net.minecraft.world.entity.Entity;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix2d;
 import org.joml.Vector2d;
@@ -25,6 +27,8 @@ import org.joml.Vector2d;
 import java.awt.*;
 import java.util.*;
 import java.lang.Thread;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
 
 /*
 
@@ -56,8 +60,6 @@ public class Minimap {
     static final int WALL = GraphicsLib.dRGB(0.5, 0.5, 0.5);
     static final double[] SHARD = {0.5, 0, 1.0};
     static final double[] ENEMY = {1.0, 0.0, 0.0};
-
-    static final int CLEAR_CACHE = 1000;
 
     public static boolean isGoodToDrawWall(Level level, Vec3 pos0) {
         BlockState b = level.getBlockState(Reference.BP(pos0));
@@ -104,27 +106,84 @@ public class Minimap {
         double SCALED = (double)SCALE;
         int BOUNDS = 2 * RADIUS * SCALE;
 
-        GraphicsLib.drawSquare(guiGraphics, 0, 0, SCALE * (2 * RADIUS + 1), VOID);
+        // GraphicsLib.drawSquare(guiGraphics, 0, 0, SCALE * (2 * RADIUS + 1), VOID);
 
-            // Draw walls where necessary
-            for (int sx = 0; sx <= BOUNDS; sx++) {
-                for (int sz = 0; sz <= BOUNDS; sz++) {
-                    int pColor = VOID;
-                    double ox = (sx / SCALED) - RADIUS;
-                    double oz = (sz / SCALED) - RADIUS;
-                    Vec3 displacement = (basisx.scale(ox)).add(basisz.scale(oz));
-                    Vec3 pos0 = pos.add(displacement);
+        ArrayList<Vec3i> good2draw = new ArrayList<>();
 
-                    for (int y = 0; y < 2; y++) {
-                        if (isGoodToDrawWall(level, pos0)) pColor = WALL;
-                        pos0 = pos0.add(new Vec3(0, 1, 0));
+            boolean SEQ = false;
+
+            if (SEQ) {
+
+                // Draw walls where necessary
+                for (int sx = 0; sx <= BOUNDS; sx++) {
+                    for (int sz = 0; sz <= BOUNDS; sz++) {
+                        int pColor = VOID;
+                        double ox = (sx / SCALED) - RADIUS;
+                        double oz = (sz / SCALED) - RADIUS;
+                        Vec3 displacement = (basisx.scale(ox)).add(basisz.scale(oz));
+                        Vec3 pos0 = pos.add(displacement);
+
+                        boolean POP_ARRAY = true;
+
+                        if (!POP_ARRAY) {
+
+                            for (int y = 0; y < 2; y++) {
+                                if (isGoodToDrawWall(level, pos0)) pColor = WALL;
+                                pos0 = pos0.add(new Vec3(0, 1, 0));
+                            }
+
+                            if (pColor != VOID) GraphicsLib.drawPixel(guiGraphics, sx, BOUNDS - sz, pColor);
+
+                        } else {
+
+                            for (int y = 0; y < 2; y++) {
+                                if (isGoodToDrawWall(level, pos0)) good2draw.add(new Vec3i(sx, 0, sz));
+                                pos0 = pos0.add(new Vec3(0, 1, 0));
+                            }
+
+                        }
                     }
-
-                    if (pColor != VOID) GraphicsLib.drawPixel(guiGraphics, sx, BOUNDS - sz, pColor);
-
-
                 }
+
+            } else {
+                final int NTHREADS = Math.clamp(Runtime.getRuntime().availableProcessors() / 2, 1, 16);
+                ExecutorService executor = Executors.newFixedThreadPool(NTHREADS);
+                ArrayList<Callable<Void>> tasks = new ArrayList<>();
+                /*
+                for (int sx = 0; sx <= BOUNDS; sx++) {
+                    final int id = sx;
+                    tasks.add(() -> {
+                      analyzeLine(id, BOUNDS, SCALED, pos, level, guiGraphics, good2draw, basisx, basisz);
+                      return null;
+                    });
+                    // analyzeLine(sx, BOUNDS, SCALED, pos, level, guiGraphics, good2draw, basisx, basisz);
+                }
+                 */
+
+                for (int sx = 0; sx < NTHREADS; sx++) {
+                    final int id = sx;
+                    tasks.add(() -> {
+                        analyzeLines(id, NTHREADS, BOUNDS, SCALED, pos, level, guiGraphics, good2draw, basisx, basisz);
+                        return null;
+                    });
+                    // analyzeLine(sx, BOUNDS, SCALED, pos, level, guiGraphics, good2draw, basisx, basisz);
+                }
+
+                try {
+                    executor.invokeAll(tasks);
+
+                    executor.shutdown();
+                    // System.out.println("Map analysis completed.");
+                } catch (Exception e) {System.out.println("MAP ANALYSIS ERROR: " + e.toString());}
             }
+
+            for (Vec3i v : good2draw) GraphicsLib.drawPixel(guiGraphics, v.getX(), BOUNDS - v.getZ(), WALL);
+
+        boolean terrainOnly = false;
+        if (terrainOnly) {
+            guiGraphics.disableScissor();
+            return;
+        }
 
         // Draw shards
 
@@ -134,6 +193,12 @@ public class Minimap {
         filter.add(ModBlocks.SHARD.get());
         AABB thing = Reference.prism(pos, LARGERAD, SHARD_RAD + SHARD_FADE + 1);
         ArrayList<BlockPos> shards = Reference.getBlocksInAABB(level, thing, filter);
+
+        boolean stopAtShardComputation = false;
+        if (stopAtShardComputation) {
+            guiGraphics.disableScissor();
+            return;
+        }
 
         for (BlockPos bp : shards) {
             double opacity = 0;
@@ -199,5 +264,52 @@ public class Minimap {
         GraphicsLib.drawScaledPixel(guiGraphics, RADIUS, RADIUS, SCALE, PLR);
 
         guiGraphics.disableScissor();
+    }
+
+    static synchronized void appendVec3is(ArrayList<Vec3i> destination, ArrayList<Vec3i> toAppend) {
+        for (Vec3i v : toAppend) { destination.add(v); }
+    }
+
+    static void analyzeLine(int sx, int BOUNDS, double SCALED, Vec3 pos, Level level, GuiGraphics guiGraphics, ArrayList<Vec3i> good2draw, Vec3 basisx, Vec3 basisz) {
+        System.out.println(sx);
+        ArrayList<Vec3i> temp_list = new ArrayList<>();
+
+        for (int sz = 0; sz <= BOUNDS; sz++) {
+            double ox = (sx / SCALED) - RADIUS;
+            double oz = (sz / SCALED) - RADIUS;
+            Vec3 displacement = (basisx.scale(ox)).add(basisz.scale(oz));
+            Vec3 pos0 = pos.add(displacement);
+
+
+            for (int y = 0; y < 2; y++) {
+                if (isGoodToDrawWall(level, pos0)) temp_list.add(new Vec3i(sx, 0, sz));
+                pos0 = pos0.add(new Vec3(0, 1, 0));
+            }
+        }
+
+        appendVec3is(good2draw, temp_list);
+    }
+
+    static void analyzeLines(int sx, int step, int BOUNDS, double SCALED, Vec3 pos, Level level, GuiGraphics guiGraphics, ArrayList<Vec3i> good2draw, Vec3 basisx, Vec3 basisz) {
+        // System.out.println(sx);
+        ArrayList<Vec3i> temp_list = new ArrayList<>();
+        for (; sx <= BOUNDS; sx += step) {
+
+
+            for (int sz = 0; sz <= BOUNDS; sz++) {
+                double ox = (sx / SCALED) - RADIUS;
+                double oz = (sz / SCALED) - RADIUS;
+                Vec3 displacement = (basisx.scale(ox)).add(basisz.scale(oz));
+                Vec3 pos0 = pos.add(displacement);
+
+
+                for (int y = 0; y < 2; y++) {
+                    if (isGoodToDrawWall(level, pos0)) temp_list.add(new Vec3i(sx, 0, sz));
+                    pos0 = pos0.add(new Vec3(0, 1, 0));
+                }
+            }
+        }
+
+        appendVec3is(good2draw, temp_list);
     }
 }
