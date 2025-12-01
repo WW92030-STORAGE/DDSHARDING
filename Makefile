@@ -2,4 +2,4 @@ all:
 	./gradlew runClient
 
 build:
-    ./gradlew build
+	./gradlew build
