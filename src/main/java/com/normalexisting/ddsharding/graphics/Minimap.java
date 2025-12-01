@@ -106,7 +106,7 @@ public class Minimap {
         double SCALED = (double)SCALE;
         int BOUNDS = 2 * RADIUS * SCALE;
 
-        // GraphicsLib.drawSquare(guiGraphics, 0, 0, SCALE * (2 * RADIUS + 1), VOID);
+        GraphicsLib.drawSquare(guiGraphics, 0, 0, SCALE * (2 * RADIUS + 1), VOID);
 
         ArrayList<Vec3i> good2draw = new ArrayList<>();
 

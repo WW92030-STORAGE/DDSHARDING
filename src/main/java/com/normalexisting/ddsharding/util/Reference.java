@@ -128,7 +128,7 @@ public class Reference {
 
     static void analyzeLayers(int sy, int step, Level level, AABB aabb, Collection<Block> filter, ArrayList<BlockPos> res) {
         ArrayList<BlockPos> temp_list = new ArrayList<>();
-        for (int y = sy; y <= FLOOR(aabb.maxY); y += step) {
+        for (int y = FLOOR(aabb.minY) + sy; y <= FLOOR(aabb.maxY); y += step) {
             for (int x = FLOOR(aabb.minX); x <= FLOOR(aabb.maxX); x++) {
                 for (int z = FLOOR(aabb.minZ); z <= FLOOR(aabb.maxZ); z++) {
                     if (filter.size() > 0) {
